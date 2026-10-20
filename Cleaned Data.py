@@ -302,13 +302,6 @@ offensive_points = reg_team.select([
     how="left"
 )
 
-# Check for missing scores
-print(
-    "Missing offensive scores:",
-    offensive_points.filter(
-        pl.col("points_scored").is_null()
-    ).height
-)
 
 # Total points scored per team per season
 points_scored_season = (
@@ -334,16 +327,7 @@ reg_off_season = reg_off_season.with_columns(
     ).alias("points_scored_per_game")
 )
 
-# Verify results
-print(reg_off_season.shape)
 
-print(reg_off_season.select([
-    "season",
-    "team",
-    "games_played",
-    "total_points_scored",
-    "points_scored_per_game"
-]).head(10))
 # Cleaned offensive df
 # print(reg_off_season.select([
 #     "Fillinhere"
@@ -541,17 +525,17 @@ reg_def_season = reg_def_season.with_columns(
     ).alias("estimated_epa_allowed_per_play")
 )
 
-print(reg_def_season.shape)
-
-print(reg_def_season.select([
-    "season",
-    "team",
-    "games_played",
-    "total_points_allowed",
-    "points_allowed_per_game",
-    "yards_allowed_per_game",
-    "yards_allowed_per_play"
-]).head(10))
+# print(reg_def_season.shape)
+#
+# print(reg_def_season.select([
+#     "season",
+#     "team",
+#     "games_played",
+#     "total_points_allowed",
+#     "points_allowed_per_game",
+#     "yards_allowed_per_game",
+#     "yards_allowed_per_play"
+# ]).head(10))
 
 # ----------------------------------------------------------------------
 # Regular Season (2015-2025) Offense stats - > reg_off_season
@@ -655,15 +639,15 @@ full_season = full_season.with_columns(
     .fill_null(1)
     .cast(pl.Int8)
 )
-
-print(full_season.shape)
-
-print(
-    full_season
-    .group_by("playoff_class")
-    .len()
-    .sort("playoff_class")
-)
+#
+# print(full_season.shape)
+#
+# print(
+#     full_season
+#     .group_by("playoff_class")
+#     .len()
+#     .sort("playoff_class")
+# )
 # ---------------------------------------------------------------------
 # Verify postseason classification for 2015
 # Won Super Bowl = 5
@@ -673,30 +657,30 @@ print(
 # Missed Playoffs = 1
 
 # Checking to See if Teams are classified correctly
-print(
-    full_season
-    .filter(
-        (pl.col("season") == 2015) &
-        (pl.col("team").is_in([
-            "DEN", "CAR", "ARI", "NE", "CLE"
-        ]))
-    )
-    .select([
-        "season",
-        "team",
-        "playoff_class"
-    ])
-    .sort("playoff_class", descending=True)
-)
+# print(
+#     full_season
+#     .filter(
+#         (pl.col("season") == 2015) &
+#         (pl.col("team").is_in([
+#             "DEN", "CAR", "ARI", "NE", "CLE"
+#         ]))
+#     )
+#     .select([
+#         "season",
+#         "team",
+#         "playoff_class"
+#     ])
+#     .sort("playoff_class", descending=True)
+# )
+#
+# # Check playoff classification distribution
+# print(
+#     full_season
+#     .group_by("playoff_class")
+#     .len()
+#     .sort("playoff_class")
 
-# Check playoff classification distribution
-print(
-    full_season
-    .group_by("playoff_class")
-    .len()
-    .sort("playoff_class")
-
-)# FINAL DATA QUALITY CHECKS
+# )# FINAL DATA QUALITY CHECKS
 
 # 1. Duplicate team-seasons
 # duplicates = (
@@ -706,7 +690,7 @@ print(
 #     .filter(pl.col("len") > 1)
 # )
 
-print("Duplicate team-seasons:", duplicates.height)
+# print("Duplicate team-seasons:", duplicates.height)
 
 
 # 2. Total missing values
@@ -729,12 +713,35 @@ print("Duplicate team-seasons:", duplicates.height)
 #     ])
 # )
 #
-# print("Rows with NaN or infinity:", invalid_rows.height)
+# print("Rows with NaN or infinity
+# :", invalid_rows.height)
 
 # Results
 # Duplicate team-seasons: 0
 # Missing values: 0
 # Rows with NaN or infinity: 0
+
+#  Additional Feature
+# Create additional defensive per-game statistics
+
+full_season = full_season.with_columns([
+
+    (
+        pl.col("total_def_sacks") /
+        pl.col("games_played")
+    ).alias("def_sacks_per_game"),
+
+    (
+        pl.col("total_def_interceptions") /
+        pl.col("games_played")
+    ).alias("def_interceptions_per_game")
+
+])
+
+# Save the final cleaned dataset
+full_season.write_parquet("team_season_data.parquet")
+
+print("Cleaned dataset saved successfully!")
 
 
 
